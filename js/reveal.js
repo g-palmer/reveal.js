@@ -134,6 +134,9 @@ var Reveal = (function(){
 		// Delays updates to the URL due to a Chrome thumbnailer bug
 		writeURLTimeout = 0,
 
+		// Silences 'hashchange' event when URL is updated without slide change
+		silent = false,
+
 		// A delay used to activate the overview mode
 		activateOverviewTimeout = 0,
 
@@ -1339,8 +1342,9 @@ var Reveal = (function(){
 		}
 
 		// Update the URL hash after a delay since updating it mid-transition
-		// is likely to cause visual lag
-		writeURL( 1500 );
+		// is likely to cause visual lag. Pass 'silent' option to suppress
+		// 'hashchange' event
+		writeURL( 1500, { silent : true } );
 
 		// Find the current horizontal slide and any possible vertical slides
 		// within it
@@ -1823,7 +1827,7 @@ var Reveal = (function(){
 	 * @param {Number} delay The time in ms to wait before
 	 * writing the hash
 	 */
-	function writeURL( delay ) {
+	function writeURL( delay, options ) {
 
 		if( config.history ) {
 
@@ -1832,9 +1836,14 @@ var Reveal = (function(){
 
 			// If a delay is specified, timeout this call
 			if( typeof delay === 'number' ) {
-				writeURLTimeout = setTimeout( writeURL, delay );
+				writeURLTimeout = setTimeout( function() {
+					writeURL( null, options );
+				}, delay );
 			}
 			else {
+
+				silent = options.silent ? true : false;
+
 				var url = '/';
 
 				// If the current slide has an ID, use that as a named link
@@ -2387,7 +2396,7 @@ var Reveal = (function(){
 	 */
 	function onWindowHashChange( event ) {
 
-		readURL();
+		return silent ? silent = false : readURL();
 
 	}
 
